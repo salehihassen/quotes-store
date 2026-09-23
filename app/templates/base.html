@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quotes</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#8220;</text></svg>">
+  <script src="/static/htmx.min.js" defer></script>
+  <script>
+    // Applied before first paint so the chosen theme never flashes.
+    (function () {
+      var saved = localStorage.getItem('quotes-theme');
+      if (saved) document.documentElement.dataset.theme = saved;
+    })();
+    function toggleTheme() {
+      var root = document.documentElement;
+      var dark = root.dataset.theme === 'dark' ||
+        (root.dataset.theme === 'auto' &&
+         window.matchMedia('(prefers-color-scheme: dark)').matches);
+      root.dataset.theme = dark ? 'light' : 'dark';
+      localStorage.setItem('quotes-theme', root.dataset.theme);
+    }
+  </script>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  {% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.bak-*
+.stack-backups/
+.Caddyfile.bak-*

@@ -1,0 +1,45 @@
+<input type="hidden" id="tagfilter" name="tag" value="{{ tag }}">
+
+<div class="board-head">
+  <div class="tagbar">
+    <button class="chip {% if not tag %}on{% endif %}"
+            hx-get="/quotes" hx-target="#board" hx-swap="innerHTML" hx-include="#search">
+      All
+    </button>
+    {% for t in tags %}
+    <button class="chip {% if tag and t.tag_name|lower == tag|lower %}on{% endif %}"
+            hx-get="/quotes?tag={{ t.tag_name|urlencode }}"
+            hx-target="#board" hx-swap="innerHTML" hx-include="#search">
+      {{ t.tag_name }}<span class="chip-n">{{ t.n }}</span>
+    </button>
+    {% endfor %}
+  </div>
+  <div class="stats">
+    <span><b>{{ stats.quotes }}</b> quotes</span>
+    <span><b>{{ stats.authors }}</b> authors</span>
+    <span><b>{{ stats.tags }}</b> tags</span>
+  </div>
+</div>
+
+{% if quotes %}
+<div class="grid">
+  {% for q in quotes %}
+    {% include "partials/card.html" %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <span class="mark big">&ldquo;</span>
+  {% if search or tag %}
+    <h2>Nothing matches</h2>
+    <p>No quotes for
+      {% if search %}&ldquo;{{ search }}&rdquo;{% endif %}
+      {% if search and tag %} tagged {% endif %}
+      {% if tag %}<b>{{ tag }}</b>{% endif %}.
+    </p>
+  {% else %}
+    <h2>No quotes yet</h2>
+    <p>Add the first one and it will show up right here.</p>
+  {% endif %}
+</div>
+{% endif %}

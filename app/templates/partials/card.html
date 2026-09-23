@@ -1,0 +1,39 @@
+<article class="card-slot quote-card" id="quote-{{ q.quote_id }}">
+  <blockquote>{{ q.quote }}</blockquote>
+
+  <div class="meta">
+    {% if q.author %}<span class="author">&mdash; {{ q.author }}</span>{% endif %}
+    {% if q.source_link %}
+      {% if q.source_link.startswith('http') %}
+        <a class="source" href="{{ q.source_link }}" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round">
+            <path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.5 1.5"/>
+            <path d="M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7L12 19"/>
+          </svg>
+          Source
+        </a>
+      {% else %}
+        <span class="source plain">{{ q.source_link }}</span>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  {% if q.tags %}
+  <div class="tags">
+    {% for t in q.tags %}
+    <button class="tag" hx-get="/quotes?tag={{ t|urlencode }}"
+            hx-target="#board" hx-swap="innerHTML" hx-include="#search">{{ t }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card-actions">
+    <button class="btn tiny ghost" hx-get="/quotes/{{ q.quote_id }}/edit"
+            hx-target="#quote-{{ q.quote_id }}" hx-swap="outerHTML">Edit</button>
+    <button class="btn tiny danger" hx-delete="/quotes/{{ q.quote_id }}"
+            hx-target="#board" hx-swap="innerHTML"
+            hx-include="#search, #tagfilter"
+            hx-confirm="Delete this quote? This cannot be undone.">Delete</button>
+  </div>
+</article>

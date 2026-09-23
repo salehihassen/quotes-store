@@ -1,0 +1,53 @@
+{% set editing = quote is not none %}
+<article class="card-slot editor" {% if editing %}id="quote-{{ quote.quote_id }}"{% endif %}>
+  <form {% if editing %}
+          hx-post="/quotes/{{ quote.quote_id }}"
+          hx-target="#quote-{{ quote.quote_id }}" hx-swap="outerHTML"
+        {% else %}
+          hx-post="/quotes"
+          hx-target="#board" hx-swap="innerHTML"
+          hx-include="#search, #tagfilter"
+          hx-on::after-request="if(event.detail.successful) this.closest('#composer').innerHTML=''"
+        {% endif %}>
+    <h3>{{ 'Edit quote' if editing else 'New quote' }}</h3>
+
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <label class="field">
+      <span>Quote <em>required</em></span>
+      <textarea id="quote-input" name="quote" rows="3" required
+                placeholder="The words themselves&hellip;">{{ quote.quote if editing and quote.quote else '' }}</textarea>
+    </label>
+
+    <div class="row">
+      <label class="field">
+        <span>Author <em>optional</em></span>
+        <input name="author" value="{{ quote.author if editing and quote.author else '' }}"
+               placeholder="Who said it">
+      </label>
+      <label class="field">
+        <span>Source <em>optional</em></span>
+        <input name="source_link"
+               value="{{ quote.source_link if editing and quote.source_link else '' }}"
+               placeholder="Link or where it came from">
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Tags <em>optional</em></span>
+      <input name="tags" value="{{ quote.tags|join(', ') if editing else '' }}"
+             placeholder="Comma separated, e.g. funny, work">
+    </label>
+
+    <div class="form-actions">
+      {% if editing %}
+      <button type="button" class="btn ghost" hx-get="/quotes/{{ quote.quote_id }}"
+              hx-target="#quote-{{ quote.quote_id }}" hx-swap="outerHTML">Cancel</button>
+      {% else %}
+      <button type="button" class="btn ghost"
+              onclick="this.closest('#composer').innerHTML=''">Cancel</button>
+      {% endif %}
+      <button type="submit" class="btn primary">{{ 'Save changes' if editing else 'Add quote' }}</button>
+    </div>
+  </form>
+</article>
