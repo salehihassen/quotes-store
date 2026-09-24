@@ -439,6 +439,15 @@ body {
   font-size: 12.5px;
   text-align: center;
 }
+.foot-versions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--faint);
+}
 .foot code {
   font-variant-numeric: tabular-nums;
   color: var(--muted);

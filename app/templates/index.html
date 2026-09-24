@@ -50,5 +50,12 @@
 
 <footer class="wrap foot">
   <span>Stored in Postgres &middot; <code>{{ stats.quotes }}</code> quotes and counting</span>
+  <span class="foot-versions">
+    <span>quotes <code>{{ app_version() }}</code></span>
+    {# Omitted rather than shown blank if the database was unreachable at boot. #}
+    {% set pg = db_version() %}
+    {% if pg %}<span aria-hidden="true">&middot;</span>
+    <span>PostgreSQL <code>{{ pg }}</code></span>{% endif %}
+  </span>
 </footer>
 {% endblock %}

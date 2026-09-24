@@ -1,7 +1,7 @@
 services:
   quotes:
     build: .
-    image: quotes:0.1.0
+    image: quotes:0.3.0
     container_name: quotes
     restart: unless-stopped
     env_file: .env

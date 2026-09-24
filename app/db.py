@@ -5,6 +5,7 @@ plain dicts so the templates stay free of driver types.
 """
 
 import os
+import time
 from contextlib import contextmanager
 
 import psycopg
@@ -100,6 +101,7 @@ def init_schema() -> None:
     pool().open(wait=True, timeout=30)
     with cursor(commit=True) as cur:
         cur.execute(SCHEMA)
+    server_version()  # warm the footer's cache while the pool is fresh
 
 
 # --- reads -----------------------------------------------------------------
@@ -148,6 +150,80 @@ def get_quote(quote_id: int) -> dict | None:
     with cursor() as cur:
         cur.execute(_SELECT + " WHERE q.quote_id = %s GROUP BY q.quote_id", (quote_id,))
         return cur.fetchone()
+
+
+def random_quote(
+    max_chars: int | None = None,
+    tags: tuple[str, ...] = (),
+    exclude_tags: tuple[str, ...] = (),
+) -> dict | None:
+    """One random quote, or None when nothing matches.
+
+    `tags` keeps only quotes carrying at least one of them; `exclude_tags`
+    drops any quote carrying one of them. Exclusion wins where they overlap.
+    Tag comparison is case-insensitive, as everywhere else in the app.
+    """
+    where = ["q.quote IS NOT NULL", "btrim(q.quote) <> ''"]
+    params: list = []
+
+    if max_chars is not None:
+        where.append("char_length(q.quote) <= %s")
+        params.append(max_chars)
+
+    _has_tag = (
+        "q.quote_id {op} (SELECT qt2.quote_id FROM quote_tag qt2 "
+        "JOIN tags t2 ON t2.tag_id = qt2.tag_id "
+        "WHERE lower(t2.tag_name) = ANY(%s))"
+    )
+    if tags:
+        where.append(_has_tag.format(op="IN"))
+        params.append([t.lower() for t in tags])
+    if exclude_tags:
+        where.append(_has_tag.format(op="NOT IN"))
+        params.append([t.lower() for t in exclude_tags])
+
+    sql = (
+        _SELECT
+        + " WHERE "
+        + " AND ".join(where)
+        + " GROUP BY q.quote_id ORDER BY random() LIMIT 1"
+    )
+    with cursor() as cur:
+        cur.execute(sql, params)
+        return cur.fetchone()
+
+
+_server_version: str | None = None
+_server_version_tried: float | None = None
+_SERVER_VERSION_RETRY = 60.0
+
+
+def server_version() -> str | None:
+    """Postgres' own version, e.g. "18.6". Fetched once, then cached forever.
+
+    Primed at startup so no page render ever waits on it. Returns None while
+    the database has not been reachable, letting the footer omit the number
+    rather than fail the page -- and a failed lookup is not retried more than
+    once a minute, so an absent database cannot turn every render into a fresh
+    connection attempt.
+    """
+    global _server_version, _server_version_tried
+    if _server_version is not None:
+        return _server_version
+
+    now = time.monotonic()
+    if _server_version_tried is not None and now - _server_version_tried < _SERVER_VERSION_RETRY:
+        return None
+    _server_version_tried = now
+
+    try:
+        with cursor() as cur:
+            cur.execute("SELECT current_setting('server_version') AS v")
+            # "18.6 (Debian 18.6-1.pgdg13+2)" -> "18.6"
+            _server_version = cur.fetchone()["v"].split()[0]
+    except Exception:
+        return None
+    return _server_version
 
 
 def list_tags() -> list[dict]:
