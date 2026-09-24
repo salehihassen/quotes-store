@@ -38,7 +38,7 @@ On the `c3` host this runs from the `/opt/docker-compose.yaml` stack rather
 than this compose file, so both are not started at once:
 
 ```sh
-git tag v0.4.1 && git push origin main v0.4.1  # publishes ghcr.io/salehihassen/quotes-store:0.4.1
+git tag v0.4.2 && git push origin v0.4.2  # publishes ghcr.io/salehihassen/quotes-store:0.4.2
 docker compose -f /opt/docker-compose.yaml pull quotes
 docker compose -f /opt/docker-compose.yaml up -d --no-deps quotes
 ```
