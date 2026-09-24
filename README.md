@@ -38,9 +38,14 @@ On the `c3` host this runs from the `/opt/docker-compose.yaml` stack rather
 than this compose file, so both are not started at once:
 
 ```sh
-docker build -t quotes:0.1.1 ~/repos/quotes          # after code changes
-docker compose -f /opt/docker-compose.yaml up -d quotes
+git tag v0.4.1 && git push origin main v0.4.1  # publishes ghcr.io/salehihassen/quotes-store:0.4.1
+docker compose -f /opt/docker-compose.yaml pull quotes
+docker compose -f /opt/docker-compose.yaml up -d --no-deps quotes
 ```
+
+For a later release, use the next version tag and update the `quotes` image
+tag in `/opt/docker-compose.yaml` before pulling. GitHub Actions publishes
+each `vX.Y.Z` tag to GHCR without the leading `v` in the image tag.
 
 There it is published on loopback only and served on the tailnet by Caddy at
 <https://quote.d.salehh.xyz>; <https://quotes.d.salehh.xyz> is an alias that
