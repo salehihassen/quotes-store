@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'release-rebuild/v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing version tag to rebuild and publish
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,14 +21,28 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Select release tag
+        env:
+          SOURCE_REF: ${{ inputs.release_tag || github.ref_name }}
+        run: |
+          release_tag="${SOURCE_REF#release-rebuild/}"
+          [[ "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+
+      - name: Verify release tag
+        run: |
+          test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "refs/tags/$RELEASE_TAG")"
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Build and push versioned image
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
           REPOSITORY: ${{ github.repository }}
         run: |
           image="ghcr.io/${REPOSITORY,,}:${RELEASE_TAG#v}"
